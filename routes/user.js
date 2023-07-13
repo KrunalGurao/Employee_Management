@@ -55,28 +55,30 @@ userRouter.post('/signup', async (req, res) => {
 
 
 
-  userRouter.post('/login', async (req, res) => {
+  userRouter.post('/login',async(req,res)=>{
+    const {email,password}= req.body;
+    let user=await UserModel.find({email});
     try {
-        const { email, password } = req.body;
-    const user = await User.findOne({ email });
-    if (!user) {
-      return res.status(401).send('Invalid credentials, Please register first');
-    }
-    bcrypt.compare(password, user.password, function(err,result){
-        if(result)
-        {
-            const token = jwt.sign({ userId: user._id }, 'krunal', {expiresIn:"3hr"});
+        if(user.length>0){
+            bcrypt.compare(password,user[0].password,async(err,result)=>{
+                if(err)
+                throw err;
+                if(result){
+                    let token=jwt.sign({"UserID":user[0]._id},"masai");
+                    res.status(200).send({msg:"login successfull !",token})
+                }else{
+                    res.status(200).send({msg:"Wrong Credentials!"})
+                }
+            })
         }
-        else
-        {
-            return res.status(401).send('Wrong credentials'); 
+        else if(user.length===0){
+            res.status(201).send({msg:"Please registered first !"});
         }
-    })
-    } catch (err) {
-        res.status(401).send('Error Occured')
+    } catch (error) {
+        res.send({msg:error.message})
+        console.log(error)
     }
-  });
-
+})
 
 
 
